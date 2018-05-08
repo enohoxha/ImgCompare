@@ -70,14 +70,18 @@ public class ClustersModel {
     }
 
     public int distance(int color) {
+
         int r = color>>16&0x000000FF;
         int g = color>> 8&0x000000FF;
         int b = color>> 0&0x000000FF;
+
         int rx = Math.abs(red-r);
         int gx = Math.abs(green-g);
         int bx = Math.abs(blue-b);
+
         int d = (rx+gx+bx) / 3;
         return d;
+
     }
 
     public String toString(){

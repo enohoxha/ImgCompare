@@ -33,30 +33,34 @@ public class KMeansAlgorithm {
         //initialize clusters
         clusters = createClusters(image, numberOfClassifiers);
 
-        // create cluster lookup table
-        int[] lut = new int[imageWidth * imageHeight];
-        Arrays.fill(lut, -1);
+        // create cluster lookup table and initialize with -1
+        int[] lookupTable = new int[imageWidth * imageHeight];
+        Arrays.fill(lookupTable, -1);
         // at first loop all pixels will move their clusters
-
         boolean pixelChangedCluster = true;
-
         // loop until all clusters are stable!
         int loops = 0;
+
         while (pixelChangedCluster) {
+            //supposed that cluster base has not been caged
             pixelChangedCluster = false;
             loops++;
-            for (int y = 0; y < h; y++) {
-                for (int x = 0; x < w; x++) {
+            //loop all pixels of image
+            for (int y = 0; y < imageHeight; y++) {
+
+                for (int x = 0; x < imageWidth; x++) {
+                    //Get pixel colour
                     int pixel = image.getRGB(x, y);
+
                     ClustersModel cluster = findMinimalCluster(pixel);
-                    if (lut[w * y + x] != cluster.getId()) {
+
+                    if (lookupTable[imageWidth * y + x] != cluster.getId()) {
                         // cluster changed
                         if (mode == MODE_CONTINUOUS) {
-                            if (lut[w * y + x] != -1) {
+                            if (lookupTable[imageWidth * y + x] != -1) {
                                 // remove from possible previous
                                 // cluster
-                                clusters[lut[w * y + x]].removePixel(
-                                        pixel);
+                                clusters[lookupTable[imageWidth * y + x]].removePixel(pixel);
                             }
                             // add pixel to cluster
                             cluster.addPixel(pixel);
@@ -64,8 +68,8 @@ public class KMeansAlgorithm {
                         // continue looping
                         pixelChangedCluster = true;
 
-                        // update lut
-                        lut[w * y + x] = cluster.getId();
+                        // update lookupTable
+                        lookupTable[imageWidth * y + x] = cluster.getId();
 
                     }
                 }
@@ -76,9 +80,9 @@ public class KMeansAlgorithm {
                 for (int i = 0; i < clusters.length; i++) {
                     clusters[i].clear();
                 }
-                for (int y = 0; y < h; y++) {
-                    for (int x = 0; x < w; x++) {
-                        int clusterId = lut[w * y + x];
+                for (int y = 0; y < imageHeight; y++) {
+                    for (int x = 0; x < imageWidth; x++) {
+                        int clusterId = lookupTable[imageWidth * y + x];
                         // add pixels to cluster
                         clusters[clusterId].addPixel(
                                 image.getRGB(x, y));
@@ -88,17 +92,17 @@ public class KMeansAlgorithm {
 
         }
         // create result image
-        BufferedImage result = new BufferedImage(w, h,
+        BufferedImage result = new BufferedImage(imageWidth, imageHeight,
                 BufferedImage.TYPE_INT_RGB);
-        for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
-                int clusterId = lut[w * y + x];
+        for (int y = 0; y < imageHeight; y++) {
+            for (int x = 0; x < imageWidth; x++) {
+                int clusterId = lookupTable[imageWidth * y + x];
                 result.setRGB(x, y, clusters[clusterId].getRGB());
             }
 
         }
         long end = System.currentTimeMillis();
-        System.out.println("Clustered to " + k + " clusters in " + loops
+        System.out.println("Clustered to " + numberOfClassifiers + " clusters in " + loops
                 + " loops in " + (end - start) + " ms.");
         System.out.println("Clusers: \n\n\n");
         for (ClustersModel cluster : clusters) {
@@ -123,27 +127,41 @@ public class KMeansAlgorithm {
         int dy = image.getHeight() / numberOfClassifiers;
         // Initialize clusters
         for (int i = 0; i < numberOfClassifiers; i++) {
-
             result[i] = new ClustersModel(i, image.getRGB(x, y));
             x += dx;
             y += dy;
-
         }
 
         return result;
     }
 
-    public ClustersModel findMinimalCluster(int rgb) {
-        ClustersModel cluster = null;
-        int min = Integer.MAX_VALUE;
-        for (int i = 0; i < clusters.length; i++) {
-            int distance = clusters[i].distance(rgb);
-            if (distance < min) {
 
+    /**
+     * Get minimal value for the nearest colour to cluster them later
+     *
+     * @param rgb
+     * @return
+     */
+    //ToDo improve search for minimal cluster
+    public ClustersModel findMinimalCluster(int rgb) {
+
+        //Cluster null at first
+        ClustersModel cluster = null;
+
+        //Get a min value (very large)
+        int min = Integer.MAX_VALUE;
+
+        for (int i = 0; i < clusters.length; i++) {
+
+            int distance = clusters[i].distance(rgb);
+
+            if (distance < min) {
                 min = distance;
                 cluster = clusters[i];
             }
+
         }
+
         return cluster;
     }
 
