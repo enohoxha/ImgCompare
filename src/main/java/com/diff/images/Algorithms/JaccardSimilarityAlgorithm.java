@@ -1,8 +1,11 @@
 package com.diff.images.Algorithms;
 
 import com.diff.images.Contracts.AlgorithmsContract;
+import com.diff.images.Models.ClustersModel;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 public class JaccardSimilarityAlgorithm implements AlgorithmsContract {
 
@@ -11,12 +14,13 @@ public class JaccardSimilarityAlgorithm implements AlgorithmsContract {
      * Execute algorithm logic
      */
 
-    private int[] firstBigSet;
-    private int[] secondBigSet;
+    private ClustersModel[] firstBigSet;
+    private ClustersModel[] secondBigSet;
+    private ClustersModel[] intersectionArray;
 
     float[] jaccardSimilarity = new float[1];
 
-    public JaccardSimilarityAlgorithm(int[] firstBigSet, int[] secondBigSet) {
+    public JaccardSimilarityAlgorithm(ClustersModel[] firstBigSet, ClustersModel[] secondBigSet) {
         this.firstBigSet = firstBigSet;
         this.secondBigSet = secondBigSet;
         this.biggerSetLength = firstBigSet.length > secondBigSet.length? firstBigSet.length : secondBigSet.length;
@@ -39,19 +43,31 @@ public class JaccardSimilarityAlgorithm implements AlgorithmsContract {
 
     private int findIntersection(){
 
-        int intersection = 0;
-        int startSize = firstBigSet.length;
+        List <Integer> intersectionArray = new LinkedList<Integer>();
 
-        if(firstBigSet.length == biggerSetLength){
-            startSize = secondBigSet.length;
-        }
-
-        for(int i = 0; i < startSize; i++){
-            if(firstBigSet[i] == secondBigSet[i]){
-                    intersection ++;
+        for(int i = 0; i < firstBigSet.length; i++ ){
+            if (!intersectionArray.contains(firstBigSet[i].getRGB())) {
+                if (existInArray(secondBigSet, firstBigSet[i].getRGB())) {
+                    intersectionArray.add(firstBigSet[i].getRGB());
+                }
             }
         }
 
-        return intersection;
+        return intersectionArray.size();
     }
+
+    private boolean existInArray(ClustersModel[] array, int element){
+
+        boolean exist = false;
+
+        for(int i = 0; i < array.length; i++ ){
+            if(array[i].getRGB() == element){
+                exist = true;
+                break;
+            }
+        }
+        return exist;
+    }
+
+
 }

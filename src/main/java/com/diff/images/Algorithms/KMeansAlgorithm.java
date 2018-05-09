@@ -16,7 +16,7 @@ public class KMeansAlgorithm implements AlgorithmsContract{
     private int numberOfClassifiers;
     private int imageWidth;
     private int imageHeight;
-    private int[] bagOfWords;
+    private ClustersModel[] bagOfWords;
     private ClustersModel[] clusters;
 
     /**
@@ -71,7 +71,7 @@ public class KMeansAlgorithm implements AlgorithmsContract{
                     ClustersModel cluster = findNearestCluster(pixel);
 
                     // set cluster id on bag of words
-                    if (bagOfWords[imageWidth * y + x] != cluster.getId()) {
+                    if (bagOfWords[imageWidth * y + x].getId() != cluster.getId()) {
 
                         this.changePixels(cluster, x, y, pixel);
 
@@ -79,7 +79,7 @@ public class KMeansAlgorithm implements AlgorithmsContract{
                         pixelChangedCluster = true;
 
                         // update bagOfWords
-                        bagOfWords[imageWidth * y + x] = cluster.getId();
+                        bagOfWords[imageWidth * y + x] = cluster;
 
                     }
                 }
@@ -89,7 +89,7 @@ public class KMeansAlgorithm implements AlgorithmsContract{
         // create result image
         long end = System.currentTimeMillis();
 
-        //createRenderedImage();
+        createRenderedImage();
 
         this.printAlgorithmData(start, end, loops);
 
@@ -116,8 +116,8 @@ public class KMeansAlgorithm implements AlgorithmsContract{
 
         // If pixel  has been clustered before
         // Remove it form cluster
-        if (bagOfWords[imageWidth * y + x] != -1) {
-            clusters[bagOfWords[imageWidth * y + x]].removePixel(pixel);
+        if (bagOfWords[imageWidth * y + x].getId() != -1) {
+            clusters[bagOfWords[imageWidth * y + x].getId()].removePixel(pixel);
         }
 
         // add pixel to the new cluster
@@ -186,9 +186,9 @@ public class KMeansAlgorithm implements AlgorithmsContract{
      */
     private void setBagOfWords() {
 
-        this.bagOfWords = new int[imageWidth * imageHeight];
+        this.bagOfWords = new ClustersModel[imageWidth * imageHeight];
 
-        Arrays.fill(bagOfWords, -1);
+        Arrays.fill(bagOfWords, new ClustersModel(-1, 0));
 
     }
 
@@ -197,7 +197,7 @@ public class KMeansAlgorithm implements AlgorithmsContract{
         BufferedImage image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_RGB);
         for (int y = 0; y < imageHeight; y++) {
             for (int x = 0; x < imageWidth; x++) {
-                int clusterId = bagOfWords[imageWidth * y + x];
+                int clusterId = bagOfWords[imageWidth * y + x].getId();
                 image.setRGB(x, y, clusters[clusterId].getRGB());
             }
 
@@ -207,7 +207,7 @@ public class KMeansAlgorithm implements AlgorithmsContract{
         ImageIO.write(image, "jpg", outputfile);
     }
 
-    public int[] getOutput() {
+    public ClustersModel[] getOutput() {
         return this.bagOfWords;
     }
 
