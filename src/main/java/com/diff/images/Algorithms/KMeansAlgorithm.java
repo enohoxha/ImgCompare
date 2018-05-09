@@ -1,121 +1,136 @@
 package com.diff.images.Algorithms;
 
+import com.diff.images.Contracts.AlgorithmsContract;
 import com.diff.images.Models.ClustersModel;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 
-public class KMeansAlgorithm {
+public class KMeansAlgorithm implements AlgorithmsContract{
 
-    ClustersModel[] clusters;
-    int mode;
+    private  String imageLocation;
+    private BufferedImage image;
+    private int numberOfClassifiers;
+    private int imageWidth;
+    private int imageHeight;
+    private int[] bagOfWords;
+    private ClustersModel[] clusters;
 
-    public static final int MODE_CONTINUOUS = 1;
-    public static final int MODE_ITERATIVE = 2;
+    /**
+     * Get required input to run the algorithm
+     *
+     * @param numberOfClassifiers
+     * @param imgLocation
+     * @throws IOException
+     */
+    public KMeansAlgorithm(int numberOfClassifiers,  String imgLocation) throws IOException {
 
-    public KMeansAlgorithm(String m) {
-        int mode = 1;
-        if (m.equals("-i")) {
-            mode = MODE_ITERATIVE;
-        } else if (m.equals("-c")) {
-            mode = MODE_CONTINUOUS;
-        }
+        this.imageLocation = imgLocation;
+        this.image =  ImageIO.read(new File(imgLocation));
+        this.numberOfClassifiers = numberOfClassifiers;
+        imageWidth = image.getWidth();
+        imageHeight = image.getHeight();
+
     }
 
-    public BufferedImage calculate(BufferedImage image, int numberOfClassifiers) {
+    /**
+     * Execute algorithm logic
+     */
+    public void executeAlgorithm() throws IOException {
 
         long start = System.currentTimeMillis();
-        int imageWidth = image.getWidth();
-        int imageHeight = image.getHeight();
 
-        //initialize clusters
+        // initialize clusters
         clusters = createClusters(image, numberOfClassifiers);
 
-        // create cluster lookup table and initialize with -1
-        int[] lookupTable = new int[imageWidth * imageHeight];
-        Arrays.fill(lookupTable, -1);
+        // initialize bag of words wil -1 values
+        setBagOfWords();
+
         // at first loop all pixels will move their clusters
         boolean pixelChangedCluster = true;
-        // loop until all clusters are stable!
         int loops = 0;
 
+        // loop until no changes are made to pixels
         while (pixelChangedCluster) {
-            //supposed that cluster base has not been caged
+
+            // supposed that cluster base has not been caged
             pixelChangedCluster = false;
             loops++;
-            //loop all pixels of image
+
+            // loop all pixels of image
             for (int y = 0; y < imageHeight; y++) {
 
                 for (int x = 0; x < imageWidth; x++) {
+
                     //Get pixel colour
                     int pixel = image.getRGB(x, y);
 
-                    ClustersModel cluster = findMinimalCluster(pixel);
+                    ClustersModel cluster = findNearestCluster(pixel);
 
-                    if (lookupTable[imageWidth * y + x] != cluster.getId()) {
-                        // cluster changed
-                        if (mode == MODE_CONTINUOUS) {
-                            if (lookupTable[imageWidth * y + x] != -1) {
-                                // remove from possible previous
-                                // cluster
-                                clusters[lookupTable[imageWidth * y + x]].removePixel(pixel);
-                            }
-                            // add pixel to cluster
-                            cluster.addPixel(pixel);
-                        }
-                        // continue looping
+                    // set cluster id on bag of words
+                    if (bagOfWords[imageWidth * y + x] != cluster.getId()) {
+
+                        this.changePixels(cluster, x, y, pixel);
+
+                        // change variable to true for continue looping
                         pixelChangedCluster = true;
 
-                        // update lookupTable
-                        lookupTable[imageWidth * y + x] = cluster.getId();
+                        // update bagOfWords
+                        bagOfWords[imageWidth * y + x] = cluster.getId();
 
                     }
                 }
 
             }
-            if (mode == MODE_ITERATIVE) {
-                // update clusters
-                for (int i = 0; i < clusters.length; i++) {
-                    clusters[i].clear();
-                }
-                for (int y = 0; y < imageHeight; y++) {
-                    for (int x = 0; x < imageWidth; x++) {
-                        int clusterId = lookupTable[imageWidth * y + x];
-                        // add pixels to cluster
-                        clusters[clusterId].addPixel(
-                                image.getRGB(x, y));
-                    }
-                }
-            }
-
         }
         // create result image
-        BufferedImage result = new BufferedImage(imageWidth, imageHeight,
-                BufferedImage.TYPE_INT_RGB);
-        for (int y = 0; y < imageHeight; y++) {
-            for (int x = 0; x < imageWidth; x++) {
-                int clusterId = lookupTable[imageWidth * y + x];
-                result.setRGB(x, y, clusters[clusterId].getRGB());
-            }
-
-        }
         long end = System.currentTimeMillis();
-        System.out.println("Clustered to " + numberOfClassifiers + " clusters in " + loops
-                + " loops in " + (end - start) + " ms.");
+
+        //createRenderedImage();
+
+        this.printAlgorithmData(start, end, loops);
+
+
+    }
+
+    /**
+     * Print algorithm details for each image
+     * @param start
+     * @param end
+     * @param loops
+     */
+    private void printAlgorithmData(long start, long end, int loops) {
+
         System.out.println("Clusers: \n\n\n");
         for (ClustersModel cluster : clusters) {
             System.out.println(cluster.toString()+"\n\n");
         }
-
-        return result;
+        System.out.println("Clustered to " + numberOfClassifiers + " clusters in " + loops
+                + " loops in " + (end - start) + " ms.");
     }
 
-    public ClustersModel[] createClusters(BufferedImage image, int numberOfClassifiers) {
-        // Here the clusters are taken with specific steps,
-        // so the result looks always same with same image.
-        // You can randomize the cluster centers, if you like.
+    private void changePixels(ClustersModel cluster, int x, int y, int pixel) {
+
+        // If pixel  has been clustered before
+        // Remove it form cluster
+        if (bagOfWords[imageWidth * y + x] != -1) {
+            clusters[bagOfWords[imageWidth * y + x]].removePixel(pixel);
+        }
+
+        // add pixel to the new cluster
+        cluster.addPixel(pixel);
+    }
+
+    /**
+     * Create clusters and put them in some point at first
+     * @param image
+     * @param numberOfClassifiers
+     * @return
+     */
+    private ClustersModel[] createClusters(BufferedImage image, int numberOfClassifiers) {
 
         ClustersModel[] result = new ClustersModel[numberOfClassifiers];
 
@@ -125,8 +140,10 @@ public class KMeansAlgorithm {
         int y = 0;
         int dx = image.getWidth() / numberOfClassifiers;
         int dy = image.getHeight() / numberOfClassifiers;
+
         // Initialize clusters
         for (int i = 0; i < numberOfClassifiers; i++) {
+
             result[i] = new ClustersModel(i, image.getRGB(x, y));
             x += dx;
             y += dy;
@@ -135,15 +152,14 @@ public class KMeansAlgorithm {
         return result;
     }
 
-
     /**
      * Get minimal value for the nearest colour to cluster them later
      *
      * @param rgb
      * @return
      */
-    //ToDo improve search for minimal cluster
-    public ClustersModel findMinimalCluster(int rgb) {
+    //ToDo improve search for nearest cluster
+    private ClustersModel findNearestCluster(int rgb) {
 
         //Cluster null at first
         ClustersModel cluster = null;
@@ -165,25 +181,34 @@ public class KMeansAlgorithm {
         return cluster;
     }
 
-    public static void saveImage(String filename,
-                                 BufferedImage image) {
-        File file = new File(filename);
-        try {
-            ImageIO.write(image, "jpeg", file);
-        } catch (Exception e) {
-            System.out.println(e.toString() + " Image '" + filename
-                    + "' saving failed.");
-        }
+    /**
+     * First create an empty bag of words
+     */
+    private void setBagOfWords() {
+
+        this.bagOfWords = new int[imageWidth * imageHeight];
+
+        Arrays.fill(bagOfWords, -1);
+
     }
 
-    public static BufferedImage loadImage(String filename) {
-        BufferedImage result = null;
-        try {
-            result = ImageIO.read(new File(filename));
-        } catch (Exception e) {
-            System.out.println(e.toString() + " Image '"
-                    + filename + "' not found.");
+    private void createRenderedImage() throws IOException {
+        // create result image
+        BufferedImage image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < imageHeight; y++) {
+            for (int x = 0; x < imageWidth; x++) {
+                int clusterId = bagOfWords[imageWidth * y + x];
+                image.setRGB(x, y, clusters[clusterId].getRGB());
+            }
+
         }
-        return result;
+        File outputfile = new File(imageLocation + "rendered_image.jpg");
+
+        ImageIO.write(image, "jpg", outputfile);
     }
+
+    public int[] getOutput() {
+        return this.bagOfWords;
+    }
+
 }
