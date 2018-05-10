@@ -85,18 +85,18 @@ public class ClustersModel {
         blue  = blues/pixelCount;
     }
 
-    public int distance(int color) {
+    public double distance(int color) {
 
         // shift colours to bit range than bitwise
         int r = (color>>16) & 0x000000FF;
         int g = (color>> 8) & 0x000000FF;
         int b = (color>> 0) & 0x000000FF;
 
-        int rx = Math.abs(red-r);
+        /*int rx = Math.abs(red-r);
         int gx = Math.abs(green-g);
-        int bx = Math.abs(blue-b);
+        int bx = Math.abs(blue-b);*/
 
-        int d = (rx+gx+bx) / 3;
+        double d = Math.sqrt( (red-r)*(red-r) + (green-g) * (green-g) +  (blue-b) * (blue-b) );
         return d;
 
     }
@@ -108,4 +108,5 @@ public class ClustersModel {
                 "Pixels: "+ pixelCount + "\n" +
                 "RGB: "+ getRGB();
     }
+
 }

@@ -1,5 +1,6 @@
 package com.diff.images.Algorithms;
 
+import com.diff.images.Config.Config;
 import com.diff.images.Contracts.AlgorithmsContract;
 import com.diff.images.Models.ClustersModel;
 
@@ -11,13 +12,18 @@ import java.util.Arrays;
 
 public class KMeansAlgorithm implements AlgorithmsContract{
 
+    private int loops;
     private  String imageLocation;
     private BufferedImage image;
     private int numberOfClassifiers;
     private int imageWidth;
     private int imageHeight;
+
     private ClustersModel[] bagOfWords;
     private ClustersModel[] clusters;
+
+    private long start;
+    private long end;
 
     /**
      * Get required input to run the algorithm
@@ -41,7 +47,7 @@ public class KMeansAlgorithm implements AlgorithmsContract{
      */
     public void executeAlgorithm() throws IOException {
 
-        long start = System.currentTimeMillis();
+        start = System.currentTimeMillis();
 
         // initialize clusters
         clusters = createClusters(image, numberOfClassifiers);
@@ -51,7 +57,7 @@ public class KMeansAlgorithm implements AlgorithmsContract{
 
         // at first loop all pixels will move their clusters
         boolean pixelChangedCluster = true;
-        int loops = 0;
+        loops = 0;
 
         // loop until no changes are made to pixels
         while (pixelChangedCluster) {
@@ -87,29 +93,27 @@ public class KMeansAlgorithm implements AlgorithmsContract{
             }
         }
         // create result image
-        long end = System.currentTimeMillis();
-
-        createRenderedImage();
-
-        this.printAlgorithmData(start, end, loops);
-
-
+        end = System.currentTimeMillis();
+        if(Integer.parseInt(Config.getProperty("print_processed_image")) == 1){
+            createRenderedImage();
+        }
     }
 
     /**
      * Print algorithm details for each image
-     * @param start
-     * @param end
-     * @param loops
      */
-    private void printAlgorithmData(long start, long end, int loops) {
-
-        System.out.println("Clusers: \n\n\n");
-        for (ClustersModel cluster : clusters) {
-            System.out.println(cluster.toString()+"\n\n");
-        }
+    public void printAlgorithmData() {
         System.out.println("Clustered to " + numberOfClassifiers + " clusters in " + loops
-                + " loops in " + (end - start) + " ms.");
+                + " loops.");
+        System.out.println("Execution Time for K-NN : " + getAlgorithmTime());
+        System.out.println("\n");
+    }
+
+    /**
+     * Get execution time of algorithm in milliseconds
+     */
+    public long getAlgorithmTime() {
+        return end-start;
     }
 
     private void changePixels(ClustersModel cluster, int x, int y, int pixel) {
@@ -125,7 +129,7 @@ public class KMeansAlgorithm implements AlgorithmsContract{
     }
 
     /**
-     * Create clusters and put them in some point at first
+     *  Create clusters and put them in some point at first
      * @param image
      * @param numberOfClassifiers
      * @return
@@ -133,7 +137,6 @@ public class KMeansAlgorithm implements AlgorithmsContract{
     private ClustersModel[] createClusters(BufferedImage image, int numberOfClassifiers) {
 
         ClustersModel[] result = new ClustersModel[numberOfClassifiers];
-
         // (x and y) are k-means starting points
         //@ToDo Maybe randomize starting points
         int x = 0;
@@ -145,8 +148,8 @@ public class KMeansAlgorithm implements AlgorithmsContract{
         for (int i = 0; i < numberOfClassifiers; i++) {
 
             result[i] = new ClustersModel(i, image.getRGB(x, y));
-            x += dx;
-            y += dy;
+            x += dx + (dx/2) / numberOfClassifiers;
+            y += dy + (dy/2) / numberOfClassifiers;
         }
 
         return result;
@@ -165,11 +168,11 @@ public class KMeansAlgorithm implements AlgorithmsContract{
         ClustersModel cluster = null;
 
         //Get a min value (very large)
-        int min = Integer.MAX_VALUE;
+        double min = Integer.MAX_VALUE;
 
         for (int i = 0; i < clusters.length; i++) {
 
-            int distance = clusters[i].distance(rgb);
+            double distance = clusters[i].distance(rgb);
 
             if (distance < min) {
                 min = distance;
@@ -208,7 +211,8 @@ public class KMeansAlgorithm implements AlgorithmsContract{
     }
 
     public ClustersModel[] getOutput() {
-        return this.bagOfWords;
+        return this.clusters;
     }
+
 
 }

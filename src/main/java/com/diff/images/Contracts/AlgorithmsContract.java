@@ -16,5 +16,12 @@ public interface AlgorithmsContract {
      */
     public <T> T getOutput();
 
+    public void printAlgorithmData();
+
+    /**
+     * Get execution time of algorithm in milliseconds
+     */
+    public long getAlgorithmTime();
+
 
 }
