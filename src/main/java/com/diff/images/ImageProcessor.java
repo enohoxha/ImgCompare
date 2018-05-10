@@ -3,9 +3,11 @@ import com.diff.images.Adapters.AlgorithmsAdapter;
 import com.diff.images.Algorithms.JaccardSimilarityAlgorithm;
 import com.diff.images.Algorithms.KMeansAlgorithm;
 import com.diff.images.Config.Config;
+import com.diff.images.Database.DbConnection;
 import com.diff.images.Models.ClustersModel;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,7 +16,12 @@ import java.util.concurrent.Future;
 public class ImageProcessor {
 
 
-    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
+    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException, SQLException, ClassNotFoundException {
+
+        DbConnection db = new DbConnection();
+
+
+
 
         ExecutorService service = Executors.newFixedThreadPool(2);
 
