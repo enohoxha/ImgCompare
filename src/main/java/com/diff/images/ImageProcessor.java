@@ -22,7 +22,7 @@ public class ImageProcessor {
 
         String homeDir = "/home/eno/code/JavaEE/Imageprocesor/img/";
         String src = homeDir+"b1.jpg";
-        String src2 = homeDir+"b2.jpg";
+        String src2 = homeDir+"b4.png";
 
         int numberOfClusters = Integer.parseInt(Config.getProperty("clusters_number"));
 

@@ -19,7 +19,8 @@ public class KMeansAlgorithm implements AlgorithmsContract{
     private int imageWidth;
     private int imageHeight;
 
-    private ClustersModel[] bagOfWords;
+    private int[] bagOfWords;
+
     private ClustersModel[] clusters;
 
     private long start;
@@ -47,16 +48,17 @@ public class KMeansAlgorithm implements AlgorithmsContract{
      */
     public void executeAlgorithm() throws IOException {
 
-        start = System.currentTimeMillis();
 
         // initialize clusters
         clusters = createClusters(image, numberOfClassifiers);
 
         // initialize bag of words wil -1 values
         setBagOfWords();
+        start = System.currentTimeMillis();
 
         // at first loop all pixels will move their clusters
         boolean pixelChangedCluster = true;
+
         loops = 0;
 
         // loop until no changes are made to pixels
@@ -77,7 +79,7 @@ public class KMeansAlgorithm implements AlgorithmsContract{
                     ClustersModel cluster = findNearestCluster(pixel);
 
                     // set cluster id on bag of words
-                    if (bagOfWords[imageWidth * y + x].getId() != cluster.getId()) {
+                    if (bagOfWords[imageWidth * y + x] != cluster.getId()) {
 
                         this.changePixels(cluster, x, y, pixel);
 
@@ -85,7 +87,7 @@ public class KMeansAlgorithm implements AlgorithmsContract{
                         pixelChangedCluster = true;
 
                         // update bagOfWords
-                        bagOfWords[imageWidth * y + x] = cluster;
+                        bagOfWords[imageWidth * y + x] = cluster.getId();
 
                     }
                 }
@@ -120,8 +122,8 @@ public class KMeansAlgorithm implements AlgorithmsContract{
 
         // If pixel  has been clustered before
         // Remove it form cluster
-        if (bagOfWords[imageWidth * y + x].getId() != -1) {
-            clusters[bagOfWords[imageWidth * y + x].getId()].removePixel(pixel);
+        if (bagOfWords[imageWidth * y + x] != -1) {
+            clusters[bagOfWords[imageWidth * y + x]].removePixel(pixel);
         }
 
         // add pixel to the new cluster
@@ -143,13 +145,11 @@ public class KMeansAlgorithm implements AlgorithmsContract{
         int y = 0;
         int dx = image.getWidth() / numberOfClassifiers;
         int dy = image.getHeight() / numberOfClassifiers;
-
         // Initialize clusters
         for (int i = 0; i < numberOfClassifiers; i++) {
-
             result[i] = new ClustersModel(i, image.getRGB(x, y));
-            x += dx + (dx/2) / numberOfClassifiers;
-            y += dy + (dy/2) / numberOfClassifiers;
+            x += dx;
+            y += dy;
         }
 
         return result;
@@ -167,12 +167,13 @@ public class KMeansAlgorithm implements AlgorithmsContract{
         //Cluster null at first
         ClustersModel cluster = null;
 
+
         //Get a min value (very large)
-        double min = Integer.MAX_VALUE;
+        int min = Integer.MAX_VALUE;
 
         for (int i = 0; i < clusters.length; i++) {
 
-            double distance = clusters[i].distance(rgb);
+            int distance = clusters[i].distance(rgb);
 
             if (distance < min) {
                 min = distance;
@@ -189,9 +190,9 @@ public class KMeansAlgorithm implements AlgorithmsContract{
      */
     private void setBagOfWords() {
 
-        this.bagOfWords = new ClustersModel[imageWidth * imageHeight];
+        this.bagOfWords = new int[imageWidth * imageHeight];
 
-        Arrays.fill(bagOfWords, new ClustersModel(-1, 0));
+        Arrays.fill(bagOfWords, -1);
 
     }
 
@@ -200,7 +201,7 @@ public class KMeansAlgorithm implements AlgorithmsContract{
         BufferedImage image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_RGB);
         for (int y = 0; y < imageHeight; y++) {
             for (int x = 0; x < imageWidth; x++) {
-                int clusterId = bagOfWords[imageWidth * y + x].getId();
+                int clusterId = bagOfWords[imageWidth * y + x];
                 image.setRGB(x, y, clusters[clusterId].getRGB());
             }
 
