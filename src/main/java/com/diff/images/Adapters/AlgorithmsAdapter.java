@@ -6,7 +6,7 @@ import com.diff.images.Models.ClustersModel;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-public class AlgorithmsAdapter implements Callable<ClustersModel[]> {
+public class AlgorithmsAdapter{
 
     AlgorithmsContract algorithm;
 
@@ -47,9 +47,5 @@ public class AlgorithmsAdapter implements Callable<ClustersModel[]> {
      * @return computed result
      * @throws Exception if unable to compute a result
      */
-    public ClustersModel[] call() throws Exception {
-        this.executeAlgorithm();
-        this.printAlgorithmData();
-        return this.getOutput();
-    }
+
 }

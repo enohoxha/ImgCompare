@@ -1,69 +1,65 @@
 package com.diff.images;
-import com.diff.images.Adapters.AlgorithmsAdapter;
-import com.diff.images.Algorithms.JaccardSimilarityAlgorithm;
-import com.diff.images.Algorithms.KMeansAlgorithm;
 import com.diff.images.Config.Config;
 import com.diff.images.Database.DbConnection;
-import com.diff.images.Models.ClustersModel;
+import com.diff.images.Models.ImageModel;
+import com.diff.images.Services.ImageCompareService;
 
 import java.io.IOException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.concurrent.ExecutionException;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class ImageProcessor {
 
 
-    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException, SQLException, ClassNotFoundException {
-
+    public static void main(String[] args) throws SQLException, ClassNotFoundException, IOException, InterruptedException {
+        int threadNumber = Integer.parseInt(Config.getProperty("number_of_threads"));
         DbConnection db = new DbConnection();
 
+        // count rows
+        ResultSet resultSet = db.executeQuery("SELECT count(*) as total FROM photos", false);
+        int rowNumber = 0;
+        while (resultSet.next()) {
+            rowNumber = resultSet.getInt("total");
+        }
 
+        // Find number of rows for each thread
+        int recordsPerRow = rowNumber / threadNumber;
 
+        ArrayList<ImageModel> images = new ArrayList<ImageModel>(recordsPerRow);
 
-        ExecutorService service = Executors.newFixedThreadPool(2);
+       // String query = "SELECT * FROM photos limit " + recordsPerRow + " offset " + i * recordsPerRow;
+        String query2 = "SELECT * FROM photos ";
+        ResultSet resultSetRows = db.executeQuery(query2, false);
 
+        while (resultSetRows.next()) {
+            images.add(new ImageModel(resultSetRows.getInt("id"), resultSetRows.getString("img")));
+        }
 
+        // loop images
+        for (int i = 0; i < images.size(); i++){
+            ImageModel imageModel = images.get(i);
+            for (int j = 0; j < threadNumber; j++){
+                ImageCompareService compareService = new ImageCompareService(imageModel, images.subList(j * recordsPerRow, j*recordsPerRow + recordsPerRow), "t-"+j, db);
+                compareService.start();
+            }
+            for (int j = 0; j < threadNumber; j++){
+                Thread t = getThreadByName("t-"+j);
+                if(t != null)
+                    t.join();
+            }
+        }
 
-        String homeDir = "/home/eno/code/JavaEE/Imageprocesor/img/";
-        String src = homeDir+"b1.jpg";
-        String src2 = homeDir+"b4.png";
-
-        int numberOfClusters = Integer.parseInt(Config.getProperty("clusters_number"));
-
-        long start = System.currentTimeMillis();
-
-        AlgorithmsAdapter algorithmsAdapter= new AlgorithmsAdapter(new KMeansAlgorithm(numberOfClusters, src));
-        Future<ClustersModel[]> response =  service.submit(algorithmsAdapter);
-
-        AlgorithmsAdapter algorithmsAdapter2= new AlgorithmsAdapter(new KMeansAlgorithm(numberOfClusters, src2));
-        Future<ClustersModel[]> response2 =  service.submit(algorithmsAdapter2);
-
-
-
-        AlgorithmsAdapter algorithmsAdapter3= new AlgorithmsAdapter(new JaccardSimilarityAlgorithm(response.get(), response2.get()));
-        algorithmsAdapter3.executeAlgorithm();
-        double[] response3 = algorithmsAdapter3.getOutput();
-
-        long end = System.currentTimeMillis();
-
-/*
-
-        System.out.println("\n**************************************Execution info for first compare**************************************");
-        algorithmsAdapter.printAlgorithmData();
-        algorithmsAdapter2.printAlgorithmData();
-
-*/
-        algorithmsAdapter3.printAlgorithmData();
-        System.out.println("\n-----------------------------------------------------End-------------------------------------------------------------\n");
-        System.out.println("Total execution time : " + (double)(algorithmsAdapter.getAlgorithmTime() + algorithmsAdapter2.getAlgorithmTime() +
-        algorithmsAdapter3.getAlgorithmTime()) / 1000 + " sec");
-        System.out.println("Total: " + (double)(end-start) / 1000 + "sec");
 
     }
 
-
+    public static Thread getThreadByName(String threadName) {
+        for (Thread t : Thread.getAllStackTraces().keySet()) {
+            if (t.getName().equals(threadName)) return t;
+        }
+        return null;
+    }
 
 }
