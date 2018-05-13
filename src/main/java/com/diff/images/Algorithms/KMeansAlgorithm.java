@@ -107,7 +107,7 @@ public class KMeansAlgorithm implements AlgorithmsContract{
     public void printAlgorithmData() {
         System.out.println("Clustered to " + numberOfClassifiers + " clusters in " + loops
                 + " loops.");
-        System.out.println("Execution Time for K-NN : " + getAlgorithmTime());
+        System.out.println("Execution Time for K-Mean : " + getAlgorithmTime());
         System.out.println("\n");
     }
 
