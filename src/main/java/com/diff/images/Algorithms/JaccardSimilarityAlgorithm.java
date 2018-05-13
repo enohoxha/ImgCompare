@@ -22,6 +22,7 @@ public class JaccardSimilarityAlgorithm implements AlgorithmsContract {
     double[] jaccardSimilarity = new double[1];
 
     public JaccardSimilarityAlgorithm(ClustersModel[] firstBigSet, ClustersModel[] secondBigSet) {
+
         this.firstBigSet = firstBigSet;
         this.secondBigSet = secondBigSet;
     }

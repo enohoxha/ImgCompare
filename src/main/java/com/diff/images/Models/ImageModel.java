@@ -1,6 +1,8 @@
 package com.diff.images.Models;
 
-public class ImageModel {
+import java.io.Serializable;
+
+public class ImageModel implements Serializable {
     private int id;
     private String name;
 

@@ -1,7 +1,9 @@
 package com.diff.images.Models;
 
-public class ClustersModel {
+import java.io.Serializable;
 
+public class ClustersModel implements Serializable {
+    private static final long serialVersionUID = 1L;
     private int id;
     private int pixelCount;
     private int red;
